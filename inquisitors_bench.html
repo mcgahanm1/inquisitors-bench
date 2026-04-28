@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Inquisitor's Bench</title>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --parchment: #f2e8d5;
+    --parchment-dark: #e0ceaa;
+    --ink: #1a1208;
+    --ink-faded: #3d2e14;
+    --blood: #8b1a1a;
+    --gold: #a07820;
+    --gold-light: #c9a84c;
+    --seal: #6b2020;
+    --shadow: rgba(26,18,8,0.5);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: #0d0a06;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, #1a0f05 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, #1a0d0d 0%, transparent 50%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IM Fell English', serif;
+    padding: 20px;
+  }
+
+  .screen { display: none; width: 100%; max-width: 780px; }
+  .screen.active { display: block; }
+
+  /* PARCHMENT CARD */
+  .parchment {
+    background-color: var(--parchment);
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+    border: 2px solid var(--parchment-dark);
+    box-shadow:
+      0 0 0 1px var(--gold),
+      0 0 40px rgba(160,120,32,0.15),
+      8px 8px 40px rgba(0,0,0,0.7),
+      inset 0 0 60px rgba(160,120,32,0.08);
+    padding: 50px 55px;
+    position: relative;
+    animation: fadeIn 0.8s ease;
+  }
+
+  .parchment::before, .parchment::after {
+    content: '';
+    position: absolute;
+    left: 14px; right: 14px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .parchment::before { top: 14px; }
+  .parchment::after { bottom: 14px; }
+
+  /* DECORATIVE CORNERS */
+  .corner {
+    position: absolute;
+    width: 28px; height: 28px;
+    border-color: var(--gold);
+    border-style: solid;
+    opacity: 0.7;
+  }
+  .corner-tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
+  .corner-tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; }
+  .corner-bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; }
+  .corner-br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+
+  /* TITLE SCREEN */
+  .title-seal {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .seal-circle {
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, var(--blood), #3d0808);
+    border: 3px solid var(--gold);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(139,26,26,0.4), inset 0 0 15px rgba(0,0,0,0.4);
+    font-size: 36px;
+  }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(24px, 5vw, 38px);
+    font-weight: 700;
+    color: var(--ink);
+    text-align: center;
+    letter-spacing: 3px;
+    line-height: 1.2;
+    margin: 18px 0 6px;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.3);
+  }
+
+  .subtitle {
+    font-family: 'IM Fell English SC', serif;
+    font-size: 13px;
+    color: var(--gold);
+    text-align: center;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0;
+    color: var(--gold);
+    font-size: 14px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+  }
+
+  .intro-text {
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--ink-faded);
+    text-align: center;
+    font-style: italic;
+    margin-bottom: 28px;
+  }
+
+  .intro-text strong {
+    font-style: normal;
+    color: var(--ink);
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 16px 24px;
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--blood), #6b1010);
+    color: var(--parchment);
+    box-shadow: 0 4px 20px rgba(139,26,26,0.35), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #a02020, var(--blood));
+    box-shadow: 0 6px 25px rgba(139,26,26,0.5);
+    transform: translateY(-1px);
+  }
+
+  /* CASE SCREEN */
+  .case-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+
+  .case-number {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding-top: 4px;
+  }
+
+  .progress-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 1px solid var(--gold);
+    background: transparent;
+    transition: background 0.3s;
+  }
+  .dot.done { background: var(--gold); }
+  .dot.current { background: var(--blood); border-color: var(--blood); }
+
+  h2 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(16px, 3vw, 22px);
+    color: var(--ink);
+    line-height: 1.3;
+    margin-bottom: 18px;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  .section-label {
+    font-family: 'IM Fell English SC', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--parchment-dark), transparent);
+  }
+
+  .background-text, .testimony-text {
+    font-size: 15px;
+    line-height: 1.9;
+    color: var(--ink-faded);
+    margin-bottom: 24px;
+  }
+
+  .testimony-text {
+    font-style: italic;
+    border-left: 3px solid var(--blood);
+    padding-left: 16px;
+    color: var(--ink);
+  }
+
+  .verdict-label {
+    font-family: 'IM Fell English SC', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--blood);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .verdict-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(139,26,26,0.4), transparent);
+  }
+
+  .options-grid {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .option-btn {
+    background: rgba(160,120,32,0.06);
+    border: 1px solid var(--parchment-dark);
+    padding: 14px 18px;
+    text-align: left;
+    font-family: 'IM Fell English', serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink-faded);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .option-btn:hover {
+    background: rgba(139,26,26,0.08);
+    border-color: var(--blood);
+    color: var(--ink);
+  }
+
+  .option-letter {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+    min-width: 20px;
+    margin-top: 2px;
+  }
+
+  /* REVEAL SCREEN */
+  .verdict-banner {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .verdict-tag {
+    display: inline-block;
+    padding: 6px 20px;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border: 1px solid;
+    margin-bottom: 10px;
+  }
+
+  .verdict-tag.correct {
+    color: #2a5a2a;
+    border-color: #2a5a2a;
+    background: rgba(42,90,42,0.08);
+  }
+
+  .verdict-tag.incorrect {
+    color: var(--blood);
+    border-color: var(--blood);
+    background: rgba(139,26,26,0.08);
+  }
+
+  .chosen-verdict {
+    font-size: 14px;
+    color: var(--ink-faded);
+    font-style: italic;
+    margin-bottom: 4px;
+  }
+
+  .real-outcome-box {
+    background: rgba(139,26,26,0.06);
+    border: 1px solid rgba(139,26,26,0.25);
+    padding: 18px 20px;
+    margin: 16px 0;
+  }
+
+  .real-outcome-box p {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--ink);
+  }
+
+  .reflection-box {
+    background: rgba(160,120,32,0.06);
+    border-left: 3px solid var(--gold);
+    padding: 16px 18px;
+    margin: 16px 0 24px;
+  }
+
+  .reflection-box p {
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--ink-faded);
+    font-style: italic;
+  }
+
+  .nav-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--ink-faded);
+    border: 1px solid var(--parchment-dark);
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover {
+    border-color: var(--gold);
+    color: var(--ink);
+  }
+
+  /* RESULTS SCREEN */
+  .score-display {
+    text-align: center;
+    padding: 30px 0;
+  }
+
+  .score-number {
+    font-family: 'Cinzel', serif;
+    font-size: 72px;
+    font-weight: 700;
+    color: var(--blood);
+    line-height: 1;
+    display: block;
+    text-shadow: 2px 2px 0 rgba(139,26,26,0.2);
+  }
+
+  .score-denom {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    color: var(--gold);
+    letter-spacing: 4px;
+  }
+
+  .score-label {
+    font-family: 'IM Fell English SC', serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--ink-faded);
+    margin-top: 8px;
+    display: block;
+  }
+
+  .result-text {
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--ink-faded);
+    font-style: italic;
+    text-align: center;
+    margin: 20px 0;
+  }
+
+  .case-summary {
+    margin: 20px 0;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--parchment-dark);
+    font-size: 13px;
+    gap: 12px;
+  }
+
+  .summary-row:last-child { border-bottom: none; }
+
+  .summary-case {
+    color: var(--ink-faded);
+    font-style: italic;
+    flex: 1;
+  }
+
+  .summary-result {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 3px 10px;
+    border: 1px solid;
+  }
+
+  .summary-result.correct { color: #2a5a2a; border-color: #2a5a2a; }
+  .summary-result.incorrect { color: var(--blood); border-color: var(--blood); }
+
+  .note {
+    font-size: 12px;
+    color: var(--gold);
+    text-align: center;
+    font-style: italic;
+    margin-top: 12px;
+    line-height: 1.6;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 500px) {
+    .parchment { padding: 32px 24px; }
+    .nav-btns { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TITLE SCREEN -->
+<div class="screen active" id="screen-title">
+  <div class="parchment">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="title-seal">
+      <div class="seal-circle">⚖</div>
+    </div>
+
+    <h1>The Inquisitor's Bench</h1>
+    <div class="subtitle">A Game of Colonial Justice</div>
+
+    <div class="divider">✦</div>
+
+    <p class="intro-text">
+      The year is somewhere between 1545 and 1808. You are a judge of the
+      <strong>Holy Office of the Inquisition</strong> in colonial Latin America.<br><br>
+      Before you sit six cases drawn from <strong>real historical records</strong> —
+      cases of desire, devotion, deception, and defiance. Read the testimony.
+      Issue your verdict. Then discover what the court actually decided,
+      and what it reveals about sex, power, and religion in the colonial world.
+    </p>
+
+    <div class="divider">✦</div>
+
+    <p class="note" style="margin-bottom: 24px;">
+      These cases are based on primary sources studied in HIST 243:<br>
+      History of Sex and Sexuality in Latin America, Denison University.
+    </p>
+
+    <button class="btn btn-primary" onclick="startGame()">Begin the Proceedings</button>
+  </div>
+</div>
+
+<!-- CASE SCREEN -->
+<div class="screen" id="screen-case">
+  <div class="parchment">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="case-header">
+      <div class="case-number" id="case-number">Case I of VI</div>
+      <div class="progress-dots" id="progress-dots"></div>
+    </div>
+
+    <h2 id="case-title"></h2>
+
+    <div class="section-label">Background</div>
+    <p class="background-text" id="case-background"></p>
+
+    <div class="section-label">Testimony</div>
+    <p class="testimony-text" id="case-testimony"></p>
+
+    <div class="verdict-label">Issue Your Verdict</div>
+    <div class="options-grid" id="options-grid"></div>
+  </div>
+</div>
+
+<!-- REVEAL SCREEN -->
+<div class="screen" id="screen-reveal">
+  <div class="parchment">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="case-header">
+      <div class="case-number" id="reveal-case-number">Case I of VI</div>
+      <div class="progress-dots" id="reveal-progress-dots"></div>
+    </div>
+
+    <h2 id="reveal-title"></h2>
+
+    <div class="verdict-banner">
+      <div class="verdict-tag" id="verdict-tag">—</div>
+      <div class="chosen-verdict" id="chosen-verdict"></div>
+    </div>
+
+    <div class="section-label">The Historical Record</div>
+    <div class="real-outcome-box">
+      <p id="real-outcome"></p>
+    </div>
+
+    <div class="section-label">What This Reveals</div>
+    <div class="reflection-box">
+      <p id="reflection"></p>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn-secondary" onclick="replayCase()">↩ Reconsider</button>
+      <button class="btn btn-primary" id="next-btn" onclick="nextCase()" style="font-size:11px; letter-spacing:2px; padding:14px;">Next Case →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div class="screen" id="screen-results">
+  <div class="parchment">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="title-seal">
+      <div class="seal-circle">⚖</div>
+    </div>
+
+    <h1 style="font-size: clamp(20px,4vw,30px); margin-bottom: 6px;">The Session Concludes</h1>
+    <div class="subtitle">Your Record as Inquisitor</div>
+
+    <div class="divider">✦</div>
+
+    <div class="score-display">
+      <span class="score-number" id="final-score">0</span>
+      <span class="score-denom" id="score-denom">/ 6</span>
+      <span class="score-label">Verdicts Matched History</span>
+    </div>
+
+    <p class="result-text" id="result-text"></p>
+
+    <div class="section-label">Case Summary</div>
+    <div class="case-summary" id="case-summary"></div>
+
+    <div class="divider">✦</div>
+
+    <p class="note">
+      These outcomes are drawn from real Inquisition records.<br>
+      The difficulty of matching history reveals just how unpredictable<br>
+      colonial justice truly was — shaped by gender, race, and religion.
+    </p>
+
+    <button class="btn btn-primary" style="margin-top: 24px;" onclick="restartGame()">Begin Again</button>
+  </div>
+</div>
+
+<script>
+const CASES = [
+  {
+    title: "The Case of Catarina Maria",
+    location: "Mexico City, 1598",
+    background: "Catarina Maria presented a legal case against Juan Teioa, who she said deflowered her. The Mexican courts examined the evidence and the nature of the two people's relationship, resulting in an unexpected outcome.",
+    testimony: "Catarina Maria brought claims against Juan Teioa, who deflowered her, and demands compensation. Juan denies any wrongdoing. After reviewing the evidence, the court finds there is not enough to hold Juan liable — and turns its judgment toward Catarina herself, finding that she had been the one pursuing him.",
+    options: [
+      "Rule in Catarina's favor — Juan must pay damages and marry her.",
+      "Dismiss the case — both parties face no penalties.",
+      "Release Juan, and warn Catarina to 'live decently or marry' under threat of six years in a recogimiento.",
+      "Imprison both parties pending further investigation."
+    ],
+    correctIndex: 2,
+    realOutcome: "Juan was released and absolved of all charges. Catarina was warned not to solicit men or behave provocatively, and threatened with six years in a recogimiento — a house of confinement for wayward women — if she violated the ruling.",
+    reflection: "This case illustrates how colonial legal systems frequently flipped accountability onto women. Rather than protecting Catarina, the court pathologized her sexuality and punished her for it — revealing how gender and sexual behavior were policed very differently depending on whether you were a man or a woman."
+  },
+  {
+    title: "The Case of Agustina Ruiz",
+    location: "Querétaro, Mexico, 1621",
+    background: "The Inquisition examines a case involving the intense desires of a twenty-year-old Mexican woman, Agustina Ruiz. In her testimony, the Inquisition discovered that her desire manifested in shocking ways — sometimes during Mass itself.",
+    testimony: "A Spanish priest and commissary of the Mexican Holy Office came forward, accusing Agustina of never completing her confession — in which she testified to daily masturbation since the age of eleven, claiming that Jesus Christ and the Virgin Mary joined with her in various sexual positions. She further stated that when attending Mass, upon seeing the Eucharist raised, she would see Jesus Christ with his genitals exposed, feel sexually aroused, and sin with herself right there in the church.",
+    options: [
+      "Sentence her to death for profaning the sacraments.",
+      "Force her to complete confession and pay a large fine.",
+      "Accept that her areas of spiritual desire simply became confused — dismiss the case.",
+      "Sentence her to three years confined to a Mexican convent."
+    ],
+    correctIndex: 3,
+    realOutcome: "Agustina was eventually sentenced to spend three years confined to a convent in Mexico City — a punishment that acknowledged the severity of her transgressions while stopping short of the harshest penalties available.",
+    reflection: "Sexuality and religiosity within colonial Latin America were not inherently opposed — they often reinforced one another, as seen through Agustina's case. Her desire, far from being separated from her faith, was expressed through it. Her case reveals how the Inquisition policed not just outward actions but the interior life of desire itself."
+  },
+  {
+    title: "The Case of Marina de San Miguel",
+    location: "Mexico City, 1598",
+    background: "Marina de San Miguel, a 54-year-old beata (devout laywoman), was brought before the Mexican Inquisition accused of heresy. Known in her neighborhood for her religious visions and trances, her position gave her unusual social power — but when the Inquisition questioned her, her testimony revealed a far deeper web of sexual conduct.",
+    testimony: "After being questioned by the Inquisition, Marina revealed that she believed she had sexual and spiritual visions involving Jesus, the devil, and the saints. She testified to sexual relations with another beata, with male priests, and to masturbation. Of her relationship with the other religious woman, Marina testified that she put her hands on her breasts and 'came to pollution ten or twelve times, twice in the church.' She insisted throughout that she never believed she was sinning — only giving thanks to God.",
+    options: [
+      "Find Marina innocent — her experiences are genuine religious devotion.",
+      "Fine her and strip her of her status as a beata.",
+      "Execute her as an unrepentant heretic.",
+      "Subject her to public humiliation, 100 lashes, and ten years' confinement."
+    ],
+    correctIndex: 3,
+    realOutcome: "On March 25, 1601, Marina was gagged, stripped to the waist, and paraded through the streets of Mexico City on a mule. She received 100 lashes, was fined 100 pesos, and was sentenced to ten years' confinement in a plague hospital.",
+    reflection: "While Marina possessed real social power as a beata — a power that even clergy recognized — her case shows that this power extended only so far. The moment her sexuality became visible to the Inquisition, it was weaponized against her as evidence of heresy. Sexual deviancy and religious crime were treated as one and the same."
+  },
+  {
+    title: "The Case of Padre Cristóbal",
+    location: "Hocaba, Yucatán, 1545–1808",
+    background: "Padre Cristóbal, a Franciscan parish priest in Hocaba, Mexico, was accused of sexual abuse and misconduct by two Mayan men. The case placed the word of indigenous witnesses against that of a representative of the colonial Church — an institution that held enormous power over Mayan communities.",
+    testimony: "Clemente, one of the accusers, testified that Padre Cristóbal lured him into the confession room, where Cristóbal was naked and physically abused him. He claimed the priest threatened him with death, and told him that if he was unwilling to engage in the sexual encounter, he should go and bring his wife instead.",
+    options: [
+      "Dismiss the case — no one believes Clemente's word over a priest's.",
+      "Allow others to come forward; upon further testimony, remove Cristóbal from his post and put him on trial.",
+      "Remove Cristóbal from his post quietly, but never pursue a formal trial.",
+      "Put the two accusers on trial for slandering a man of God."
+    ],
+    correctIndex: 1,
+    realOutcome: "Other Mayan men came forward with similar complaints against Cristóbal. The weight of testimony led to his removal from his post and a formal trial — a rare instance in which indigenous voices succeeded in holding a colonial priest accountable.",
+    reflection: "This case reveals the profound tension between Spanish Catholic authority and Mayan experience in colonial Yucatán. That indigenous testimony was eventually believed speaks to the volume of accusers — it took many voices to overcome one priest's institutional power. The case also shows how the confessional became a site of sexual exploitation under colonialism."
+  },
+  {
+    title: "The Case of Maria Antonia and Witchcraft",
+    location: "Colonial Latin America",
+    background: "It was common for colonial Latin American women to know certain remedies believed to attract or hold the affection of men. Maria Antonia, hoping to prevent her husband from being unfaithful while he was away, added menstrual blood and pubic hair to his food.",
+    testimony: "Maria Antonia eventually felt guilty about using what the Church considered witchcraft. She confessed the act to her priest — who, rather than granting absolution, reported her case directly to the Inquisition.",
+    options: [
+      "Burn Maria at the stake for practicing witchcraft.",
+      "Sentence her to ten years in prison.",
+      "Allow Maria to flee before punishment can be issued.",
+      "Dismiss the case — the Inquisition considers this beneath their concern."
+    ],
+    correctIndex: 3,
+    realOutcome: "The Inquisition concluded the case was not worth their time and released Maria Antonia without punishment — a striking outcome that reveals how the colonial Church ranked its threats.",
+    reflection: "This case shows that the Spanish Catholic Church did not fear folk magic and witchcraft with the same intensity as Protestant authorities in Europe did. The Inquisition's indifference here reveals a hierarchy of concern: heresy and sodomy were existential threats; a wife's love remedy was not. Popular magic occupied a complicated, sometimes tolerated space in colonial Latin American life."
+  },
+  {
+    title: "The Case of Juana Larramendia",
+    location: "Colonial Latin America",
+    background: "Juana Larramendia was an unmarried domestic worker who became pregnant outside of wedlock. Overwhelmed by shame, she strangled and beat her newborn to death in her bed. When brought before the court, the question was not simply what she had done — but what kind of woman she was.",
+    testimony: "Juana's lawyers argued that her actions were an attempt to preserve her honor in a society that offered unmarried mothers no protection and no mercy. However, the court focused less on the act of infanticide itself and more on what it revealed about Juana's character: they classified her as unsuited for family life and unlikely to ever be a good mother.",
+    options: [
+      "Send Juana to a convent to repent for her sins.",
+      "Issue the standard sentence for infanticide — approximately six years.",
+      "Issue a longer sentence because she failed to demonstrate the natural abilities of a mother.",
+      "Execute Juana by hanging for the brutality of the murder."
+    ],
+    correctIndex: 2,
+    realOutcome: "Juana was given a sentence longer than the typical punishment for infanticide — not because of the brutality of the act, but because the court determined she lacked the natural instincts of a good mother.",
+    reflection: "The perceptions of a woman's honor in colonial Latin America were deeply tied to her capacity for motherhood. Juana was not sentenced more harshly for the violence of her crime, but for failing to embody the colonial ideal of womanhood. This reveals how motherhood was used as the ultimate measure of a woman's worth — and how failing that standard could cost you more than the crime itself."
+  }
+];
+
+let currentCase = 0;
+let score = 0;
+let results = [];
+let playerChoices = [];
+
+function startGame() {
+  currentCase = 0;
+  score = 0;
+  results = [];
+  playerChoices = [];
+  showCase();
+}
+
+function showCase() {
+  showScreen('screen-case');
+  const c = CASES[currentCase];
+  const roman = ['I','II','III','IV','V','VI'];
+
+  document.getElementById('case-number').textContent = `Case ${roman[currentCase]} of ${CASES.length}`;
+  document.getElementById('case-title').textContent = `${c.title}\n${c.location}`;
+  document.getElementById('case-background').textContent = c.background;
+  document.getElementById('case-testimony').textContent = c.testimony;
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  c.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => selectOption(i);
+    grid.appendChild(btn);
+  });
+
+  updateDots('progress-dots');
+}
+
+function selectOption(index) {
+  const c = CASES[currentCase];
+  const correct = index === c.correctIndex;
+  if (correct) score++;
+  playerChoices[currentCase] = index;
+  results[currentCase] = correct;
+  showReveal(index, correct);
+}
+
+function showReveal(chosenIndex, correct) {
+  showScreen('screen-reveal');
+  const c = CASES[currentCase];
+  const roman = ['I','II','III','IV','VI','VI'];
+  const letters = ['A','B','C','D'];
+
+  document.getElementById('reveal-case-number').textContent = `Case ${roman[currentCase]} of ${CASES.length}`;
+  document.getElementById('reveal-title').textContent = `${c.title} — ${c.location}`;
+
+  const tag = document.getElementById('verdict-tag');
+  tag.textContent = correct ? 'Your Verdict Matched History' : 'Your Verdict Differed from History';
+  tag.className = 'verdict-tag ' + (correct ? 'correct' : 'incorrect');
+
+  document.getElementById('chosen-verdict').textContent =
+    `You chose: ${letters[chosenIndex]}. ${c.options[chosenIndex]}`;
+  document.getElementById('real-outcome').textContent = c.realOutcome;
+  document.getElementById('reflection').textContent = c.reflection;
+
+  const nextBtn = document.getElementById('next-btn');
+  if (currentCase === CASES.length - 1) {
+    nextBtn.textContent = 'See Final Verdict →';
+  } else {
+    nextBtn.textContent = 'Next Case →';
+  }
+
+  updateDots('reveal-progress-dots');
+}
+
+function replayCase() {
+  results[currentCase] = undefined;
+  playerChoices[currentCase] = undefined;
+  if (results[currentCase] === true) score--;
+  showCase();
+}
+
+function nextCase() {
+  if (currentCase === CASES.length - 1) {
+    showResults();
+  } else {
+    currentCase++;
+    showCase();
+  }
+}
+
+function showResults() {
+  showScreen('screen-results');
+  document.getElementById('final-score').textContent = score;
+  document.getElementById('score-denom').textContent = `/ ${CASES.length}`;
+
+  const pct = score / CASES.length;
+  let resultText = '';
+  if (pct === 1) resultText = "A perfect record. You think like a colonial inquisitor — though whether that is cause for pride is another question entirely.";
+  else if (pct >= 0.67) resultText = "You anticipated the court's reasoning in most cases. But the cases you missed reveal just how unpredictable — and often unjust — colonial justice could be.";
+  else if (pct >= 0.34) resultText = "You and the historical court disagreed more often than not. Perhaps your instincts are more just than theirs were — or perhaps colonial logic remains foreign to us for good reason.";
+  else resultText = "The colonial court would have found your verdicts bewildering. The gap between your reasoning and theirs tells us something important about how power, gender, and religion shaped justice in the colonial world.";
+
+  document.getElementById('result-text').textContent = resultText;
+
+  const summary = document.getElementById('case-summary');
+  summary.innerHTML = '';
+  CASES.forEach((c, i) => {
+    const row = document.createElement('div');
+    row.className = 'summary-row';
+    const correct = results[i] === true;
+    row.innerHTML = `
+      <span class="summary-case">${c.title}</span>
+      <span class="summary-result ${correct ? 'correct' : 'incorrect'}">${correct ? 'Matched' : 'Differed'}</span>
+    `;
+    summary.appendChild(row);
+  });
+}
+
+function restartGame() {
+  startGame();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function updateDots(containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  CASES.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    if (i < currentCase || results[i] !== undefined) dot.classList.add('done');
+    if (i === currentCase) { dot.classList.remove('done'); dot.classList.add('current'); }
+    container.appendChild(dot);
+  });
+}
+</script>
+</body>
+</html>
